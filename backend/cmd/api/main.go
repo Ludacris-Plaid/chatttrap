@@ -98,6 +98,7 @@ func main() {
 		AppName:           "HushCircuits Pro",
 		EnablePrintRoutes: true,
 		ServerHeader:      "HushCircuits",
+		ReadBufferSize:    32768,
 	})
 
 	// Global middleware
