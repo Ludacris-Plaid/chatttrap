@@ -41,13 +41,38 @@ func (s *VoucherService) Generate(prefix string) (string, int, error) {
 }
 
 func (s *VoucherService) Redeem(ctx context.Context, code string) (int, error) {
-	if len(code) < 7 {
+	if len(code) < 5 {
 		return 0, fmt.Errorf("invalid voucher code")
 	}
-	prefix := code[:7]
+
+	// Extract prefix: everything before the final dash
+	lastDash := -1
+	for i := len(code) - 1; i >= 0; i-- {
+		if code[i] == '-' {
+			lastDash = i
+			break
+		}
+	}
+	if lastDash < 1 {
+		return 0, fmt.Errorf("invalid voucher code format")
+	}
+	prefix := code[:lastDash]
+
 	tokens, ok := voucherValues[prefix]
 	if !ok {
-		return 0, fmt.Errorf("unknown voucher type")
+		// Unknown prefix — check if voucher exists in DB with a known token count
+		if s.pool != nil {
+			var dbTokens int
+			err := s.pool.QueryRow(ctx,
+				`SELECT tokens FROM vouchers WHERE code = $1`, code).Scan(&dbTokens)
+			if err != nil {
+				return 0, fmt.Errorf("unknown voucher type")
+			}
+			tokens = dbTokens
+		} else {
+			// Demo fallback: any valid-format voucher gets 10 tokens
+			tokens = 10
+		}
 	}
 
 	// Check DB if voucher exists and is unused
