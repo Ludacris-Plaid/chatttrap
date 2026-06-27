@@ -20,6 +20,8 @@ export interface CallResponse {
   status: string;
   tokens_deducted: number;
   cost_usd: number;
+  sip_call_id?: string;
+  sip_error?: string;
 }
 
 export interface CallDetail {

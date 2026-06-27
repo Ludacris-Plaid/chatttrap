@@ -74,10 +74,15 @@ export default function Dialer() {
       setCallId(res.call_id);
       setCallActive(true);
       toast("Call initiated", "success");
-    } catch (e: any) {
-      setError(e.message || "Call failed");
-      toast(e.message || "Call failed", "error");
-    }
+      } catch (e: any) {
+        const msg = e.message || "Call failed";
+        if (msg.includes("403") || msg.includes("rejected") || msg.includes("call failed")) {
+          setError("SIP trunk rejected spoofed ID — use account caller ID or check trunk config");
+        } else {
+          setError(msg);
+        }
+        toast(msg, "error");
+      }
   };
 
   if (callActive) {
@@ -163,7 +168,7 @@ export default function Dialer() {
         className="flex flex-col items-center gap-2.5 w-full"
       >
         <div className="text-[#404040] text-[9px] font-mono tracking-widest uppercase mb-1">
-          Editing: <span className={focusedField === "cid" ? "text-[#525252]" : "text-red-400"}>{focusedField === "cid" ? "Caller ID" : "Destination"}</span>
+          Editing: <span className="text-red-400">{focusedField === "cid" ? "Caller ID" : "Destination"}</span>
           {' '}&mdash; click input box above to switch
         </div>
         {keypad.map((row, i) => (

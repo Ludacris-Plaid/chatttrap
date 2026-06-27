@@ -55,7 +55,10 @@ func (h *DialerHandler) OriginateCall(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "destination and caller id required"})
 	}
 	if !phone.Validate(req.SpoofedCallerID) || !phone.Validate(req.DestinationNumber) {
-		return c.Status(400).JSON(fiber.Map{"error": "numbers must be 1+10 digit format: 1XXXXXXXXXX"})
+		// Allow SIP usernames (non-phone-number IDs like "10428")
+		if len(req.SpoofedCallerID) < 3 || len(req.DestinationNumber) < 3 {
+			return c.Status(400).JSON(fiber.Map{"error": "numbers must be 1+10 digit format: 1XXXXXXXXXX, or a valid SIP username"})
+		}
 	}
 	req.SpoofedCallerID = phone.Normalize(req.SpoofedCallerID)
 	req.DestinationNumber = phone.Normalize(req.DestinationNumber)
