@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<include>
+  <extension name="hushcircuits_outbound">
+    <condition field="destination_number" expression="^(\d+)$">
+      <!-- Receive spoofed CID from Kamailio headers -->
+      <action application="set" data="effective_caller_id_name=${sip_h_P-Asserted-Identity}"/>
+      <action application="set" data="effective_caller_id_number=${sip_h_X-Spoofed-CID}"/>
+      
+      <!-- Originate the call -->
+      <action application="bridge" data="sofia/gateway/trunk1/$1"/>
+      
+      <!-- Enable DTMF detection -->
+      <action application="set" data="dtmf_type=rfc2833"/>
+      <action application="start_dtmf"/>
+      
+      <!-- Log DTMF events -->
+      <action application="info" data="DTMF detected: ${dtmf_digit}"/>
+      
+      <!-- Send DTMF to ESL for capture -->
+      <action application="esl_sendevent" data="DTMF_DETECTED:${dtmf_digit}"/>
+      
+      <action application="hangup"/>
+    </condition>
+  </extension>
+
+  <extension name="hushcircuits_dtmf_capture">
+    <condition field="event_name" expression="^DTMF_DETECTED$">
+      <action application="log" data="INFO DTMF captured: ${dtmf_digit} at ${event_date_local}"/>
+      <action application="esl_sendevent" data="CUSTOM hushcircuits::dtmf DIGIT=${dtmf_digit} CALL_ID=${uuid}"/>
+    </condition>
+  </extension>
+</include>
