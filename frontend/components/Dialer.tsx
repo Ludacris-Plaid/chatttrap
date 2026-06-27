@@ -25,8 +25,16 @@ export default function Dialer() {
   const lastLookedUp = useRef("");
   const { toast } = useToast();
 
-  const handleKey = (k: string) => setSpoofedCID(p => p + k);
-  const handleBackspace = () => setSpoofedCID(p => p.slice(0, -1));
+  const [focusedField, setFocusedField] = useState<"cid" | "dest">("cid");
+
+  const handleKey = (k: string) => {
+    if (focusedField === "dest") setDestination(p => p + k);
+    else setSpoofedCID(p => p + k);
+  };
+  const handleBackspace = () => {
+    if (focusedField === "dest") setDestination(p => p.slice(0, -1));
+    else setSpoofedCID(p => p.slice(0, -1));
+  };
   const handleClear = () => { setSpoofedCID(""); setDestination(""); setCnam(""); lastLookedUp.current = ""; };
 
   const handleCIDChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,10 +110,11 @@ export default function Dialer() {
       >
         <label className="text-[#525252] text-[10px] font-mono tracking-widest uppercase block">Spoofed Caller ID</label>
         <input
-          className="input-field text-lg text-center tracking-[0.2em] font-mono"
+          className={`input-field text-lg text-center tracking-[0.2em] font-mono ${focusedField === "cid" ? "!border-red-500/40 !bg-red-500/[0.03]" : ""}`}
           placeholder="1+555-555-5555"
           value={cidFmt}
           onChange={handleCIDChange}
+          onFocus={() => setFocusedField("cid")}
         />
         <AnimatePresence>
           {cnam && (
@@ -138,10 +147,11 @@ export default function Dialer() {
       >
         <label className="text-[#525252] text-[10px] font-mono tracking-widest uppercase block mb-2">Destination Number</label>
         <input
-          className="input-field text-lg text-center tracking-[0.2em] font-mono"
+          className={`input-field text-lg text-center tracking-[0.2em] font-mono ${focusedField === "dest" ? "!border-red-500/40 !bg-red-500/[0.03]" : ""}`}
           placeholder="1+555-555-5555"
           value={destFmt}
           onChange={handleDestChange}
+          onFocus={() => setFocusedField("dest")}
         />
       </motion.div>
 
@@ -152,6 +162,10 @@ export default function Dialer() {
         transition={{ delay: 0.15 }}
         className="flex flex-col items-center gap-2.5 w-full"
       >
+        <div className="text-[#404040] text-[9px] font-mono tracking-widest uppercase mb-1">
+          Editing: <span className={focusedField === "cid" ? "text-[#525252]" : "text-red-400"}>{focusedField === "cid" ? "Caller ID" : "Destination"}</span>
+          {' '}&mdash; click input box above to switch
+        </div>
         {keypad.map((row, i) => (
           <div key={i} className="flex gap-3 w-full">
             {row.map(k => (
