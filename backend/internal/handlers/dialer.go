@@ -79,7 +79,7 @@ func (h *DialerHandler) OriginateCall(c *fiber.Ctx) error {
 		}
 	}
 
-	callID, err := h.fsSvc.OriginateCall(&req)
+	sipCallID, err := h.fsSvc.OriginateCall(&req)
 	if err != nil {
 		if !isVIP {
 			h.q.ExecTx(c.Context(), func(tx pgx.Tx) error {
@@ -89,11 +89,12 @@ func (h *DialerHandler) OriginateCall(c *fiber.Ctx) error {
 		return c.Status(502).JSON(fiber.Map{"error": "call failed"})
 	}
 
-	if err := h.q.InsertCall(c.Context(), callID, uid, req.SpoofedCallerID, req.SpoofedName, req.DestinationNumber, "initiated", cost, usd); err != nil {
+	dbCallID := uuid.New().String()
+	if err := h.q.InsertCall(c.Context(), dbCallID, uid, req.SpoofedCallerID, req.SpoofedName, req.DestinationNumber, "initiated", cost, usd); err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "failed to record call"})
 	}
 
-	return c.JSON(fiber.Map{"call_id": callID, "status": "initiated", "tokens_deducted": cost, "cost_usd": usd})
+	return c.JSON(fiber.Map{"call_id": dbCallID, "sip_call_id": sipCallID, "status": "initiated", "tokens_deducted": cost, "cost_usd": usd})
 }
 
 func (h *DialerHandler) EndCall(c *fiber.Ctx) error {

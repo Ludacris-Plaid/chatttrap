@@ -97,6 +97,7 @@ func main() {
 	app := fiber.New(fiber.Config{
 		AppName:           "HushCircuits Pro",
 		EnablePrintRoutes: true,
+		ServerHeader:      "HushCircuits",
 	})
 
 	// Global middleware
